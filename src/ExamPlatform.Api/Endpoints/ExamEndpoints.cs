@@ -1,5 +1,7 @@
 using ExamPlatform.Application.DTOs;
 using ExamPlatform.Application.ExamGeneration;
+using ExamPlatform.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace ExamPlatform.Api.Endpoints;
 
@@ -8,6 +10,23 @@ public static class ExamEndpoints
     public static void MapExamEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/exams").WithTags("Exams");
+
+        group.MapGet("/", async (AppDbContext db, CancellationToken ct) =>
+        {
+            var exams = await db.Exams
+                .Include(e => e.Questions)
+                .OrderByDescending(e => e.CreatedAt)
+                .Select(e => new
+                {
+                    e.Id,
+                    e.Title,
+                    e.DocumentId,
+                    e.CreatedAt,
+                    QuestionCount = e.Questions.Count
+                })
+                .ToListAsync(ct);
+            return Results.Ok(exams);
+        });
 
         group.MapPost("/generate", async (
             GenerateExamRequest request,

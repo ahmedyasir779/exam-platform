@@ -1,0 +1,59 @@
+@page "/exams"
+@rendermode InteractiveAuto
+@inject HttpClient Http
+
+<PageTitle>Available Exams</PageTitle>
+
+<h1>Available Exams</h1>
+<p style="color:#666;">Select an exam to take it, or <a href="/upload">upload a PDF</a> to create one.</p>
+
+@if (_loading)
+{
+    <p>? Loading...</p>
+}
+else if (_exams.Count == 0)
+{
+    <p>No exams yet. <a href="/upload">Upload a PDF</a> and generate your first exam.</p>
+}
+else
+{
+    @foreach (var exam in _exams)
+    {
+        <div style="border:1px solid #ddd;border-radius:8px;padding:1rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+            <div>
+                <h3 style="margin:0;">@exam.Title</h3>
+                <p style="margin:0.3rem 0 0;color:#666;font-size:0.9rem;">
+                    @exam.QuestionCount question(s) · @exam.CreatedAt.ToString("MMM d, yyyy HH:mm")
+                </p>
+            </div>
+            <div style="display:flex;gap:0.5rem;flex-shrink:0;">
+                <a href="/exams/@exam.Id/take"
+                   style="padding:0.5rem 1rem;background:#6f42c1;color:white;border-radius:4px;text-decoration:none;">
+                    ?? Take
+                </a>
+                <a href="/api/exams/@exam.Id/export/pdf" target="_blank"
+                   style="padding:0.5rem 1rem;background:#198754;color:white;border-radius:4px;text-decoration:none;">
+                    ? PDF
+                </a>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private List<ExamSummary> _exams = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await Http.GetFromJsonAsync<List<ExamSummary>>("/api/exams");
+            _exams = result ?? [];
+        }
+        catch { }
+        finally { _loading = false; }
+    }
+
+    private record ExamSummary(Guid Id, string Title, Guid DocumentId, DateTime CreatedAt, int QuestionCount);
+}
