@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ExamPlatform.Web.Client")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+68b5df3a776d423a34a094857989b66a8cb7579a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+56383135b30a19cff27cce183d6a0c19ca7c2296")]
 [assembly: System.Reflection.AssemblyProductAttribute("ExamPlatform.Web.Client")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ExamPlatform.Web.Client")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

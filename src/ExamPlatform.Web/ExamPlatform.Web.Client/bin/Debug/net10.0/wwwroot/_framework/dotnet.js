@@ -5,7 +5,7 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
   "mainAssemblyName": "ExamPlatform.Web.Client",
   "applicationEnvironment": "Development",
   "resources": {
-    "hash": "sha256-kBfB7sumgtYYABzsxDWbl/ev8Ubw9zUM6LcQtUD1gMc=",
+    "hash": "sha256-vNbQIfv3/tzgqInNDatpo9PCLPacIEuFYcuPcQtj6cI=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.mx9wzm9o5h.js"
@@ -1242,16 +1242,16 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "ExamPlatform.Web.Client.wasm",
-        "name": "ExamPlatform.Web.Client.cj64tumakx.wasm",
-        "integrity": "sha256-6LCUzcrajMGY3eyVVrwqvifRfFrfiiEZ0lN4EBS/MoE=",
+        "name": "ExamPlatform.Web.Client.obpqqd7hj2.wasm",
+        "integrity": "sha256-tGA+3btfORlAcTuwO+ciMV/9TwjEpb3xu6yMliWxKz0=",
         "cache": "force-cache"
       }
     ],
     "pdb": [
       {
         "virtualPath": "ExamPlatform.Web.Client.pdb",
-        "name": "ExamPlatform.Web.Client.6oqessn5ms.pdb",
-        "integrity": "sha256-ekX2tpHKMhiDHiBJ2scWnq/sDYVGtIXiBojtb05CF+Y=",
+        "name": "ExamPlatform.Web.Client.mgsh50ye8a.pdb",
+        "integrity": "sha256-Vm/koRxXL7R+gF8VzyOJnR2GqANoM2Atg5Q8u+rZBLg=",
         "cache": "force-cache"
       }
     ],
