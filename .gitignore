@@ -8,3 +8,8 @@
 
 # Local data
 /data/
+
+# Build outputs
+bin/
+obj/
+
