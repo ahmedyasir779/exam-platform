@@ -1,0 +1,70 @@
+@page "/submissions/{SubmissionId:guid}/results"
+@rendermode InteractiveAuto
+@inject HttpClient Http
+
+<PageTitle>Results</PageTitle>
+
+@if (_result is null && !_loadError)
+{
+    <p>? Loading results...</p>
+}
+else if (_loadError)
+{
+    <p style="color:red;">Could not load results.</p>
+}
+else
+{
+    <h1>Exam Results</h1>
+
+    <div style="background:#f8f9fa;border-radius:8px;padding:1.5rem;margin-bottom:2rem;max-width:400px;">
+        <h2 style="margin:0;">Total Score</h2>
+        <p style="font-size:2.5rem;font-weight:bold;margin:0.5rem 0;color:@ScoreColor(_result!.TotalScore);">
+            @_result.TotalScore.ToString("F1") / 10
+        </p>
+    </div>
+
+    @foreach (var (a, i) in _result.Answers.Select((a, i) => (a, i)))
+    {
+        <div style="border:1px solid #ddd;border-radius:6px;padding:1rem;margin-bottom:1rem;border-left:4px solid @ScoreColor(a.Score);">
+            <p style="margin:0 0 0.5rem;"><strong>Q@(i + 1)</strong> — Score: <strong>@a.Score.ToString("F0") / 10</strong></p>
+            <p style="margin:0 0 0.3rem;color:#444;">Your answer: @a.StudentAnswer</p>
+            @if (a.Feedback is not null)
+            {
+                <p style="margin:0 0 0.3rem;font-style:italic;color:#555;">@a.Feedback</p>
+            }
+            @if (a.SourcePage.HasValue)
+            {
+                <p style="font-size:0.8rem;color:#888;margin:0;">?? Reference: Page @a.SourcePage</p>
+            }
+        </div>
+    }
+
+    <a href="/upload" style="display:inline-block;margin-top:1rem;padding:0.5rem 1rem;background:#6c757d;color:white;border-radius:4px;text-decoration:none;">
+        ? Upload another PDF
+    </a>
+}
+
+@code {
+    [Parameter] public Guid SubmissionId { get; set; }
+
+    private SubmissionResult? _result;
+    private bool _loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _result = await Http.GetFromJsonAsync<SubmissionResult>(
+                $"/api/submissions/{SubmissionId}/results");
+        }
+        catch
+        {
+            _loadError = true;
+        }
+    }
+
+    private static string ScoreColor(float score) => score >= 8 ? "#198754" : score >= 5 ? "#fd7e14" : "#dc3545";
+
+    private record SubmissionResult(Guid SubmissionId, float TotalScore, List<AnswerResult> Answers);
+    private record AnswerResult(Guid QuestionId, string StudentAnswer, float Score, string? Feedback, int? SourcePage);
+}

@@ -1,0 +1,164 @@
+@page "/exams/new"
+@rendermode InteractiveAuto
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Generate Exam</PageTitle>
+
+<h1>Generate Exam</h1>
+
+@if (_documentId is null)
+{
+    <p>No document selected. <a href="/upload">Upload a PDF first</a>.</p>
+}
+else
+{
+    <div style="max-width:600px;">
+        <div style="margin-bottom:1rem;">
+            <label><strong>Exam title</strong></label><br/>
+            <input @bind="_title" style="width:100%;padding:0.4rem;margin-top:0.3rem;"
+                   placeholder="e.g. Chapter 3 Quiz" />
+        </div>
+
+        <h3>Question counts</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;">
+            <label>MCQ: <input type="number" @bind="_mcqCount" min="0" max="20" style="width:60px;" /></label>
+            <label>True/False: <input type="number" @bind="_tfCount" min="0" max="20" style="width:60px;" /></label>
+            <label>Short answer: <input type="number" @bind="_shortCount" min="0" max="20" style="width:60px;" /></label>
+            <label>Definition: <input type="number" @bind="_defCount" min="0" max="20" style="width:60px;" /></label>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+            <label><strong>Difficulty</strong>
+                <select @bind="_difficulty" style="margin-left:0.5rem;">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </label>
+        </div>
+
+        <button @onclick="GenerateExam" disabled="@_generating"
+                style="padding:0.5rem 1.5rem;background:#0d6efd;color:white;border:none;border-radius:4px;cursor:pointer;">
+            @(_generating ? "Generating... (this may take a moment)" : "Generate Exam")
+        </button>
+    </div>
+
+    @if (_error is not null)
+    {
+        <p style="color:red;margin-top:1rem;">@_error</p>
+    }
+
+    @if (_exam is not null)
+    {
+        <hr style="margin:2rem 0;" />
+        <h2>@_exam.Title</h2>
+        <p style="color:#666;">@_exam.Questions.Count question(s) generated</p>
+
+        @foreach (var q in _exam.Questions)
+        {
+            <div style="border:1px solid #ddd;border-radius:6px;padding:1rem;margin-bottom:1rem;">
+                <p><strong>Q@(q.Position + 1) — @q.Type</strong></p>
+                <p>@q.QuestionText</p>
+
+                @if (q.Options is not null)
+                {
+                    <ul>
+                        @foreach (var opt in q.Options)
+                        {
+                            <li style="@(opt == q.CorrectAnswer ? "color:green;font-weight:bold;" : "")">@opt</li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p style="color:green;"><strong>Answer:</strong> @q.CorrectAnswer</p>
+                }
+
+                <p style="font-size:0.8rem;color:#888;">?? Source: Page @q.SourcePage</p>
+            </div>
+        }
+
+        <div style="display:flex;gap:1rem;margin-top:1rem;">
+            <a href="/api/exams/@_exam.Id/export/pdf" target="_blank"
+               style="padding:0.5rem 1rem;background:#198754;color:white;border-radius:4px;text-decoration:none;">
+                ? Download PDF
+            </a>
+            <a href="/api/exams/@_exam.Id/export/docx" target="_blank"
+               style="padding:0.5rem 1rem;background:#0dcaf0;color:white;border-radius:4px;text-decoration:none;">
+                ? Download DOCX
+            </a>
+            <a href="/exams/@_exam.Id/take"
+               style="padding:0.5rem 1rem;background:#6f42c1;color:white;border-radius:4px;text-decoration:none;">
+                ?? Take Exam
+            </a>
+        </div>
+    }
+}
+
+@code {
+    [SupplyParameterFromQuery] public string? DocumentId { get; set; }
+
+    private Guid? _documentId;
+    private string _title = "New Exam";
+    private int _mcqCount = 3, _tfCount = 2, _shortCount = 1, _defCount = 1;
+    private string _difficulty = "medium";
+    private bool _generating;
+    private string? _error;
+    private ExamResponse? _exam;
+
+    protected override void OnInitialized()
+    {
+        if (Guid.TryParse(DocumentId, out var id)) _documentId = id;
+    }
+
+    private async Task GenerateExam()
+    {
+        if (_documentId is null) return;
+        _generating = true;
+        _error = null;
+        _exam = null;
+
+        try
+        {
+            var questionTypes = new List<object>();
+            if (_mcqCount > 0) questionTypes.Add(new { type = "mcq", count = _mcqCount });
+            if (_tfCount > 0) questionTypes.Add(new { type = "true_false", count = _tfCount });
+            if (_shortCount > 0) questionTypes.Add(new { type = "short_answer", count = _shortCount });
+            if (_defCount > 0) questionTypes.Add(new { type = "definition", count = _defCount });
+
+            var request = new
+            {
+                documentId = _documentId,
+                title = _title,
+                template = new
+                {
+                    questionTypes,
+                    difficulty = _difficulty,
+                    language = "formal"
+                }
+            };
+
+            var response = await Http.PostAsJsonAsync("/api/exams/generate", request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _error = $"Generation failed: {response.StatusCode}";
+                return;
+            }
+
+            _exam = await response.Content.ReadFromJsonAsync<ExamResponse>();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _generating = false;
+        }
+    }
+
+    private record ExamResponse(Guid Id, string Title, Guid DocumentId, DateTime CreatedAt, List<QuestionItem> Questions);
+    private record QuestionItem(Guid Id, string Type, string QuestionText, List<string>? Options, string CorrectAnswer, int SourcePage, string? SourceSnippet, int Position);
+}

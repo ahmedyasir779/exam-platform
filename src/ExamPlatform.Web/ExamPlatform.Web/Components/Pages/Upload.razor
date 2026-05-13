@@ -1,0 +1,125 @@
+@page "/upload"
+@rendermode InteractiveAuto
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Upload PDF</PageTitle>
+
+<h1>Upload PDF</h1>
+<p>Upload an educational PDF to generate exams from it.</p>
+
+<div style="border: 2px dashed #ccc; padding: 2rem; border-radius: 8px; max-width: 500px;">
+    <InputFile OnChange="OnFileSelected" accept=".pdf" />
+
+    @if (_uploading)
+    {
+        <p style="margin-top:1rem; color:#666;">? Uploading...</p>
+    }
+
+    @if (_documentId.HasValue)
+    {
+        <p style="margin-top:1rem;">
+            Status: <strong>@_status</strong>
+        </p>
+
+        @if (_status == "processing")
+        {
+            <p style="color:#888;">Processing PDF — this may take up to 30 seconds...</p>
+        }
+
+        @if (_status == "ready")
+        {
+            <p style="color:green;">? Ready!</p>
+            <a href="/exams/new?documentId=@_documentId"
+               style="display:inline-block;margin-top:0.5rem;padding:0.5rem 1rem;background:#0d6efd;color:white;border-radius:4px;text-decoration:none;">
+                Generate Exam ?
+            </a>
+        }
+
+        @if (_status == "failed")
+        {
+            <p style="color:red;">? Processing failed. Please try a different PDF.</p>
+        }
+    }
+
+    @if (_error is not null)
+    {
+        <p style="color:red; margin-top:1rem;">@_error</p>
+    }
+</div>
+
+@code {
+    private bool _uploading;
+    private Guid? _documentId;
+    private string? _status;
+    private string? _error;
+    private System.Timers.Timer? _pollTimer;
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _uploading = true;
+        _error = null;
+        _documentId = null;
+        _status = null;
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var stream = e.File.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024);
+            content.Add(new StreamContent(stream), "file", e.File.Name);
+
+            var response = await Http.PostAsync("/api/documents/upload", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _error = $"Upload failed: {response.StatusCode}";
+                _uploading = false;
+                return;
+            }
+
+            var doc = await response.Content.ReadFromJsonAsync<DocumentStatusDto>();
+            _documentId = doc?.Id;
+            _status = doc?.Status;
+            _uploading = false;
+
+            _pollTimer = new System.Timers.Timer(2500);
+            _pollTimer.Elapsed += async (_, _) => await PollStatus();
+            _pollTimer.AutoReset = true;
+            _pollTimer.Start();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error: {ex.Message}";
+            _uploading = false;
+        }
+    }
+
+    private async Task PollStatus()
+    {
+        if (!_documentId.HasValue) return;
+        try
+        {
+            var dto = await Http.GetFromJsonAsync<DocumentStatusDto>(
+                $"/api/documents/{_documentId}/status");
+            _status = dto?.Status;
+
+            if (_status is "ready" or "failed")
+            {
+                _pollTimer?.Stop();
+                _pollTimer?.Dispose();
+                _pollTimer = null;
+            }
+        }
+        catch { /* ignore transient errors during polling */ }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        _pollTimer?.Stop();
+        _pollTimer?.Dispose();
+    }
+
+    private record DocumentStatusDto(Guid Id, string OriginalName, string Status, int? PageCount, DateTime CreatedAt);
+}

@@ -1,0 +1,141 @@
+@page "/exams/{ExamId:guid}/take"
+@rendermode InteractiveAuto
+@inject HttpClient Http
+
+<PageTitle>@(_exam?.Title ?? "Loading...")</PageTitle>
+
+@if (_exam is null && !_loadError)
+{
+    <p>? Loading exam...</p>
+}
+else if (_loadError)
+{
+    <p style="color:red;">Failed to load exam. Please check the link and try again.</p>
+}
+else if (_submitted)
+{
+    <div style="text-align:center;padding:3rem;">
+        <h2>? Submitted!</h2>
+        <p>Your answers have been graded.</p>
+        <a href="/submissions/@_submissionId/results"
+           style="padding:0.75rem 2rem;background:#0d6efd;color:white;border-radius:4px;text-decoration:none;font-size:1.1rem;">
+            View Results ?
+        </a>
+    </div>
+}
+else
+{
+    <h1>@_exam!.Title</h1>
+    <p style="color:#666;">@_exam.Questions.Count question(s) · Answer all questions then submit.</p>
+
+    @foreach (var q in _exam.Questions)
+    {
+        <div style="border:1px solid #ddd;border-radius:6px;padding:1rem;margin-bottom:1rem;">
+            <p><strong>Q@(q.Position + 1).</strong> @q.QuestionText</p>
+
+            @if (q.Type == "mcq" && q.Options is not null)
+            {
+                @foreach (var opt in q.Options)
+                {
+                    <label style="display:block;margin:0.3rem 0;cursor:pointer;">
+                        <input type="radio" name="@q.Id" value="@opt"
+                               @onchange="e => _answers[q.Id] = e.Value?.ToString() ?? string.Empty" />
+                        @opt
+                    </label>
+                }
+            }
+            else if (q.Type == "true_false")
+            {
+                <label style="display:block;margin:0.3rem 0;cursor:pointer;">
+                    <input type="radio" name="@q.Id" value="True"
+                           @onchange="e => _answers[q.Id] = e.Value?.ToString() ?? string.Empty" /> True
+                </label>
+                <label style="display:block;margin:0.3rem 0;cursor:pointer;">
+                    <input type="radio" name="@q.Id" value="False"
+                           @onchange="e => _answers[q.Id] = e.Value?.ToString() ?? string.Empty" /> False
+                </label>
+            }
+            else
+            {
+                <textarea rows="3" style="width:100%;padding:0.4rem;margin-top:0.5rem;"
+                          placeholder="Type your answer here..."
+                          @oninput="e => _answers[q.Id] = e.Value?.ToString() ?? string.Empty">
+                </textarea>
+            }
+        </div>
+    }
+
+    @if (_submitError is not null)
+    {
+        <p style="color:red;">@_submitError</p>
+    }
+
+    <button @onclick="Submit" disabled="@_submitting"
+            style="padding:0.75rem 2rem;background:#198754;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1rem;">
+        @(_submitting ? "Submitting..." : "Submit Exam")
+    </button>
+}
+
+@code {
+    [Parameter] public Guid ExamId { get; set; }
+
+    private ExamResponse? _exam;
+    private bool _loadError;
+    private readonly Dictionary<Guid, string> _answers = new();
+    private bool _submitting, _submitted;
+    private Guid? _submissionId;
+    private string? _submitError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _exam = await Http.GetFromJsonAsync<ExamResponse>($"/api/exams/{ExamId}");
+        }
+        catch
+        {
+            _loadError = true;
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (_exam is null) return;
+        _submitting = true;
+        _submitError = null;
+
+        try
+        {
+            var request = new
+            {
+                examId = ExamId,
+                studentId = (string?)null,
+                answers = _answers.Select(kv => new { questionId = kv.Key, answerText = kv.Value }).ToList()
+            };
+
+            var response = await Http.PostAsJsonAsync("/api/submissions", request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _submitError = $"Submission failed: {response.StatusCode}";
+                return;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<GradingResult>();
+            _submissionId = result?.SubmissionId;
+            _submitted = true;
+        }
+        catch (Exception ex)
+        {
+            _submitError = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private record ExamResponse(Guid Id, string Title, List<QuestionItem> Questions);
+    private record QuestionItem(Guid Id, string Type, string QuestionText, List<string>? Options, string CorrectAnswer, int SourcePage, int Position);
+    private record GradingResult(Guid SubmissionId, float TotalScore);
+}
