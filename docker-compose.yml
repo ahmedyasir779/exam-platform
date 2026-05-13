@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: examdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: src/ExamPlatform.Api/Dockerfile
+    ports:
+      - "5001:8080"
+    environment:
+      - ConnectionStrings__Default=Host=postgres;Database=examdb;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
+      - Grok__ApiKey=${GROK_API_KEY}
+      - Embedding__ApiKey=${EMBEDDING_API_KEY}
+      - Storage__BasePath=/data/files
+      - VectorStore__BasePath=/data/faiss
+    volumes:
+      - files:/data/files
+      - faiss:/data/faiss
+    depends_on:
+      - postgres
+
+  web:
+    build:
+      context: .
+      dockerfile: src/ExamPlatform.Web/ExamPlatform.Web/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ApiBaseUrl=http://api:8080
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  files:
+  faiss:
