@@ -32,21 +32,20 @@ builder.Services.AddSingleton<IVectorStore>(_ => new LocalVectorStore(vectorPath
 builder.Services.AddScoped<ChunkingStrategy>();
 builder.Services.AddScoped<PdfProcessingService>();
 
-// Embedding HTTP client
+// Both Embedding and Grok use the same Groq API key
+var groqKey = builder.Configuration["Grok:ApiKey"] ?? "";
+
 builder.Services.AddHttpClient<EmbeddingService>((_, client) =>
 {
-    var apiKey = builder.Configuration["Embedding:ApiKey"];
-    if (!string.IsNullOrEmpty(apiKey))
-        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+    client.DefaultRequestHeaders.Add("Authorization", $"Bearer {groqKey}");
+    client.Timeout = TimeSpan.FromSeconds(60);
 });
 builder.Services.AddScoped<EmbeddingService>();
 
-// Grok HTTP client
 builder.Services.AddHttpClient<GrokClient>((_, client) =>
 {
-    var apiKey = builder.Configuration["Grok:ApiKey"];
-    if (!string.IsNullOrEmpty(apiKey))
-        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+    client.DefaultRequestHeaders.Add("Authorization", $"Bearer {groqKey}");
+    client.Timeout = TimeSpan.FromSeconds(60);
 });
 
 // Application services
@@ -59,7 +58,6 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Auto-migrate on startup
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

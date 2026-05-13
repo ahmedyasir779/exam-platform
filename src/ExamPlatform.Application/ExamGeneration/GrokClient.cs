@@ -6,8 +6,8 @@ namespace ExamPlatform.Application.ExamGeneration;
 
 public class GrokClient(HttpClient httpClient)
 {
-    private const string BaseUrl = "https://api.x.ai/v1/chat/completions";
-    private const string Model = "grok-3";
+    private const string BaseUrl = "https://api.groq.com/openai/v1/chat/completions";
+    private const string Model = "llama-3.3-70b-versatile";
 
     public async Task<GeneratedQuestion> GenerateQuestionAsync(
         string questionType,
@@ -27,8 +27,8 @@ public class GrokClient(HttpClient httpClient)
         var userPrompt =
             $"Context:\n{context}\n\n" +
             $"Generate ONE {questionType} question at {difficulty} difficulty in {language} language.\n" +
-            $"Return this exact JSON shape:\n" +
-            $"{{\"question_text\":\"...\",\"options\":null,\"correct_answer\":\"...\",\"source_page\":1,\"source_snippet\":\"...\"}}";
+            $"Return this exact JSON shape (options should be null for non-MCQ):\n" +
+            "{\"question_text\":\"...\",\"options\":null,\"correct_answer\":\"...\",\"source_page\":1,\"source_snippet\":\"...\"}";
 
         var payload = new
         {
@@ -56,7 +56,7 @@ public class GrokClient(HttpClient httpClient)
         return JsonSerializer.Deserialize<GeneratedQuestion>(content, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
-        }) ?? throw new InvalidOperationException("Grok returned invalid JSON for question generation");
+        }) ?? throw new InvalidOperationException("Groq returned invalid JSON for question generation");
     }
 
     public async Task<GradingResult> GradeAnswerAsync(

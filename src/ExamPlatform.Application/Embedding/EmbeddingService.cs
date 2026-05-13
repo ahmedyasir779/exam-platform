@@ -6,11 +6,12 @@ namespace ExamPlatform.Application.Embedding;
 
 public class EmbeddingService(HttpClient httpClient, IVectorStore vectorStore)
 {
-    private const string Model = "text-embedding-3-small";
+    private const string Model = "nomic-embed-text-v1_5";
+    private const string BaseUrl = "https://api.groq.com/openai/v1/embeddings";
 
     public async Task EmbedAndIndexAsync(string documentId, IReadOnlyList<Domain.Entities.Chunk> chunks, CancellationToken ct = default)
     {
-        foreach (var batch in chunks.Chunk(100))
+        foreach (var batch in chunks.Chunk(50))
         {
             var inputs = batch.Select(c => c.Text).ToList();
             var vectors = await GetEmbeddingsAsync(inputs, ct);
@@ -33,7 +34,7 @@ public class EmbeddingService(HttpClient httpClient, IVectorStore vectorStore)
     private async Task<List<float[]>> GetEmbeddingsAsync(List<string> inputs, CancellationToken ct)
     {
         var request = new { model = Model, input = inputs };
-        var response = await httpClient.PostAsJsonAsync("https://api.openai.com/v1/embeddings", request, ct);
+        var response = await httpClient.PostAsJsonAsync(BaseUrl, request, ct);
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
