@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ExamPlatform.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+56383135b30a19cff27cce183d6a0c19ca7c2296")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a9d2be04e089b23c68056eee30f7505e50fb5666")]
 [assembly: System.Reflection.AssemblyProductAttribute("ExamPlatform.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ExamPlatform.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

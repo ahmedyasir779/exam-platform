@@ -14,3 +14,5 @@ C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\E
 C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\refint\ExamPlatform.Infrastructure.dll
 C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ExamPlatform.Infrastructure.pdb
 C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ref\ExamPlatform.Infrastructure.dll
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\bin\Debug\net10.0\ExamPlatform.Infrastructure.runtimeconfig.json
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ExamPlatform.Infrastructure.genruntimeconfig.cache
