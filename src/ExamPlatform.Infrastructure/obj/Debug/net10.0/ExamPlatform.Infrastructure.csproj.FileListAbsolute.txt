@@ -1,0 +1,16 @@
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\bin\Debug\net10.0\ExamPlatform.Infrastructure.deps.json
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\bin\Debug\net10.0\ExamPlatform.Infrastructure.dll
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\bin\Debug\net10.0\ExamPlatform.Infrastructure.pdb
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\bin\Debug\net10.0\ExamPlatform.Domain.dll
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\bin\Debug\net10.0\ExamPlatform.Domain.pdb
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ExamPlatform.Infrastructure.csproj.AssemblyReference.cache
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ExamPlatform.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ExamPlatform.Infrastructure.AssemblyInfoInputs.cache
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ExamPlatform.Infrastructure.AssemblyInfo.cs
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ExamPlatform.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ExamPlatform.Infrastructure.sourcelink.json
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ExamPlat.D8720AC3.Up2Date
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ExamPlatform.Infrastructure.dll
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\refint\ExamPlatform.Infrastructure.dll
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ExamPlatform.Infrastructure.pdb
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Infrastructure\obj\Debug\net10.0\ref\ExamPlatform.Infrastructure.dll

@@ -1,0 +1,140 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "ExamPlatform.Web/1.0.0": {
+        "dependencies": {
+          "ExamPlatform.Application": "1.0.0",
+          "ExamPlatform.Web.Client": "1.0.0",
+          "Microsoft.AspNetCore.Components.WebAssembly.Server": "10.0.7"
+        },
+        "runtime": {
+          "ExamPlatform.Web.dll": {}
+        }
+      },
+      "Microsoft.AspNetCore.Components.WebAssembly/10.0.7": {
+        "dependencies": {
+          "Microsoft.JSInterop.WebAssembly": "10.0.7"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.Components.WebAssembly.dll": {
+            "assemblyVersion": "10.0.7.0",
+            "fileVersion": "10.0.726.21808"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.Components.WebAssembly.Server/10.0.7": {
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.WebAssembly": "10.0.7"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.Components.WebAssembly.Server.dll": {
+            "assemblyVersion": "10.0.7.0",
+            "fileVersion": "10.0.726.21808"
+          }
+        }
+      },
+      "Microsoft.DotNet.HotReload.WebAssembly.Browser/10.0.203": {
+        "runtime": {
+          "lib/net10.0/Microsoft.DotNet.HotReload.WebAssembly.Browser.dll": {
+            "assemblyVersion": "10.0.203.0",
+            "fileVersion": "10.2.326.22005"
+          }
+        }
+      },
+      "Microsoft.JSInterop.WebAssembly/10.0.7": {
+        "runtime": {
+          "lib/net10.0/Microsoft.JSInterop.WebAssembly.dll": {
+            "assemblyVersion": "10.0.7.0",
+            "fileVersion": "10.0.726.21808"
+          }
+        }
+      },
+      "ExamPlatform.Application/1.0.0": {
+        "dependencies": {
+          "ExamPlatform.Domain": "1.0.0"
+        },
+        "runtime": {
+          "ExamPlatform.Application.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "ExamPlatform.Domain/1.0.0": {
+        "runtime": {
+          "ExamPlatform.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "ExamPlatform.Web.Client/1.0.0": {
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.WebAssembly": "10.0.7",
+          "Microsoft.DotNet.HotReload.WebAssembly.Browser": "10.0.203"
+        },
+        "runtime": {
+          "ExamPlatform.Web.Client.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ExamPlatform.Web/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.AspNetCore.Components.WebAssembly/10.0.7": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3MdUFSPOBlmkCx+YjWQS0s1B+v5QeyHxmix9yQ+HIiF/a01xpgIDXECOK5tCwOwjol01QP0fzKBnBP5LBBRETQ==",
+      "path": "microsoft.aspnetcore.components.webassembly/10.0.7",
+      "hashPath": "microsoft.aspnetcore.components.webassembly.10.0.7.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.Components.WebAssembly.Server/10.0.7": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-OfuZkTusYUgT3m9C94OSv3m1mNiIryUL8nw6VMexWQdVMLD71w+HJeIK+l6u5HuMRrc3GegUuFPazrtBwrQj5Q==",
+      "path": "microsoft.aspnetcore.components.webassembly.server/10.0.7",
+      "hashPath": "microsoft.aspnetcore.components.webassembly.server.10.0.7.nupkg.sha512"
+    },
+    "Microsoft.DotNet.HotReload.WebAssembly.Browser/10.0.203": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-OFnGv+vIMJdTX9U1gTIwOeE3isTt5MSy+hFpRvXceYZ2TBadvxWunKL1FHMBtY/fRXbJTtBKhByybknDQwhwgw==",
+      "path": "microsoft.dotnet.hotreload.webassembly.browser/10.0.203",
+      "hashPath": "microsoft.dotnet.hotreload.webassembly.browser.10.0.203.nupkg.sha512"
+    },
+    "Microsoft.JSInterop.WebAssembly/10.0.7": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-qHLPMsIQhqQ5jTBU3MzQg37rp6EzKT2iaMfGOSzBEiGxg4i+/1aGj3T19u/sboEGMPBx2nwIMLbSK1zLZucMcQ==",
+      "path": "microsoft.jsinterop.webassembly/10.0.7",
+      "hashPath": "microsoft.jsinterop.webassembly.10.0.7.nupkg.sha512"
+    },
+    "ExamPlatform.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "ExamPlatform.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "ExamPlatform.Web.Client/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

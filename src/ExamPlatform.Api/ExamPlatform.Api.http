@@ -1,0 +1,6 @@
+@ExamPlatform.Api_HostAddress = http://localhost:5110
+
+GET {{ExamPlatform.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

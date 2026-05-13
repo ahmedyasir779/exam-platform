@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ExamPlatform.Api/ExamPlatform.Api.csproj" />
+    <Project Path="src/ExamPlatform.Application/ExamPlatform.Application.csproj" />
+    <Project Path="src/ExamPlatform.Domain/ExamPlatform.Domain.csproj" />
+    <Project Path="src/ExamPlatform.Infrastructure/ExamPlatform.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/ExamPlatform.Web/">
+    <Project Path="src/ExamPlatform.Web/ExamPlatform.Web.Client/ExamPlatform.Web.Client.csproj" />
+    <Project Path="src/ExamPlatform.Web/ExamPlatform.Web/ExamPlatform.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ExamPlatform.IntegrationTests/ExamPlatform.IntegrationTests.csproj" />
+    <Project Path="tests/ExamPlatform.UnitTests/ExamPlatform.UnitTests.csproj" />
+  </Folder>
+</Solution>

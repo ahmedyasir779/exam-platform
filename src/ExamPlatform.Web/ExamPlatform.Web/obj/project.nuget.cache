@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "yI4BlVmQqJk=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Ahmed\\exam-platform\\src\\ExamPlatform.Web\\ExamPlatform.Web\\ExamPlatform.Web.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Ahmed\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.7\\microsoft.aspnetcore.app.internal.assets.10.0.7.nupkg.sha512",
+    "C:\\Users\\Ahmed\\.nuget\\packages\\microsoft.aspnetcore.components.webassembly\\10.0.7\\microsoft.aspnetcore.components.webassembly.10.0.7.nupkg.sha512",
+    "C:\\Users\\Ahmed\\.nuget\\packages\\microsoft.aspnetcore.components.webassembly.server\\10.0.7\\microsoft.aspnetcore.components.webassembly.server.10.0.7.nupkg.sha512",
+    "C:\\Users\\Ahmed\\.nuget\\packages\\microsoft.dotnet.hotreload.webassembly.browser\\10.0.203\\microsoft.dotnet.hotreload.webassembly.browser.10.0.203.nupkg.sha512",
+    "C:\\Users\\Ahmed\\.nuget\\packages\\microsoft.jsinterop.webassembly\\10.0.7\\microsoft.jsinterop.webassembly.10.0.7.nupkg.sha512"
+  ],
+  "logs": []
+}
