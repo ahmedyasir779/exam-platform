@@ -24,6 +24,13 @@ public class DocumentRepository(AppDbContext db) : IDocumentRepository
         await db.SaveChangesAsync(ct);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        var doc = await db.Documents.FindAsync([id], ct);
+        if (doc is not null) db.Documents.Remove(doc);
+        await db.SaveChangesAsync(ct);
+    }
+
     public async Task AddChunksAsync(IEnumerable<Chunk> chunks, CancellationToken ct = default)
     {
         db.Chunks.AddRange(chunks);

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ExamPlatform.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e72ab4fb264e20823cb1baddf4252b8ac1956c55")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c8fb72266311aaaf187d6cee83d8092189075a3f")]
 [assembly: System.Reflection.AssemblyProductAttribute("ExamPlatform.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ExamPlatform.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

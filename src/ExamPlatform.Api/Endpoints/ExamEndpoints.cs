@@ -43,5 +43,15 @@ public static class ExamEndpoints
             var exam = await service.GetByIdAsync(id, ct);
             return exam is null ? Results.NotFound() : Results.Ok(exam);
         });
+
+        group.MapDelete("/{id:guid}", async (
+            Guid id, AppDbContext db, CancellationToken ct) =>
+        {
+            var exam = await db.Exams.FindAsync([id], ct);
+            if (exam is null) return Results.NotFound();
+            db.Exams.Remove(exam);
+            await db.SaveChangesAsync(ct);
+            return Results.Ok();
+        });
     }
 }

@@ -2,50 +2,95 @@
 @rendermode InteractiveAuto
 @inject HttpClient Http
 
-<PageTitle>Available Exams</PageTitle>
+<PageTitle>All Exams</PageTitle>
 
-<h1>Available Exams</h1>
-<p style="color:#666;">Select an exam to take it, or <a href="/upload">upload a PDF</a> to create one.</p>
+<h1>All Exams</h1>
+<p style="color:#666;">
+    Select an exam to take it, or
+    <a href="/exams/new"><i class="bi bi-plus-circle"></i> create a new one</a>.
+</p>
 
 @if (_loading)
 {
-    <p>? Loading...</p>
+    <p><i class="bi bi-hourglass-split"></i> Loading...</p>
 }
 else if (_exams.Count == 0)
 {
-    <p>No exams yet. <a href="/upload">Upload a PDF</a> and generate your first exam.</p>
+    <div style="text-align:center;padding:3rem;color:#888;">
+        <i class="bi bi-journal-x" style="font-size:3rem;display:block;margin-bottom:1rem;"></i>
+        No exams yet. <a href="/upload">Upload a PDF</a> and generate your first exam.
+    </div>
 }
 else
 {
     @foreach (var exam in _exams)
     {
-        <div style="border:1px solid #ddd;border-radius:8px;padding:1rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+        <div style="border:1px solid #ddd;border-radius:8px;padding:1rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
             <div>
-                <h3 style="margin:0;">@exam.Title</h3>
+                <h3 style="margin:0;">
+                    <i class="bi bi-journal-text" style="color:#6f42c1;margin-right:0.4rem;"></i>
+                    @exam.Title
+                </h3>
                 <p style="margin:0.3rem 0 0;color:#666;font-size:0.9rem;">
-                    @exam.QuestionCount question(s) · @exam.CreatedAt.ToString("MMM d, yyyy HH:mm")
+                    <i class="bi bi-question-circle"></i> @exam.QuestionCount question(s)
+                    &nbsp;&middot;&nbsp;
+                    <i class="bi bi-calendar3"></i> @exam.CreatedAt.ToString("MMM d, yyyy HH:mm")
                 </p>
             </div>
             <div style="display:flex;gap:0.5rem;flex-shrink:0;">
                 <a href="/exams/@exam.Id/take"
-                   style="padding:0.5rem 1rem;background:#6f42c1;color:white;border-radius:4px;text-decoration:none;">
-                    ?? Take
+                   style="padding:0.5rem 1rem;background:#6f42c1;color:white;border-radius:4px;text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;">
+                    <i class="bi bi-pencil-fill"></i> Take
                 </a>
                 <a href="/api/exams/@exam.Id/export/pdf" target="_blank"
-                   style="padding:0.5rem 1rem;background:#198754;color:white;border-radius:4px;text-decoration:none;">
-                    ? PDF
+                   style="padding:0.5rem 1rem;background:#198754;color:white;border-radius:4px;text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> PDF
                 </a>
+                <button @onclick="() => ConfirmDelete(exam)"
+                        style="padding:0.5rem 1rem;background:#dc3545;color:white;border:none;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem;">
+                    <i class="bi bi-trash-fill"></i>
+                </button>
             </div>
         </div>
     }
 }
 
+@if (_deleteTarget is not null)
+{
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;">
+        <div style="background:white;border-radius:12px;padding:2rem;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+            <h3 style="margin:0 0 0.5rem;">
+                <i class="bi bi-exclamation-triangle-fill" style="color:#dc3545;"></i> Delete Exam?
+            </h3>
+            <p style="color:#555;margin:0.5rem 0 1.5rem;">
+                This will permanently delete <strong>@_deleteTarget.Title</strong>
+                and all its questions and submissions.
+            </p>
+            <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+                <button @onclick="CancelDelete"
+                        style="padding:0.5rem 1rem;background:#6c757d;color:white;border:none;border-radius:4px;cursor:pointer;">
+                    Cancel
+                </button>
+                <button @onclick="ExecuteDelete" disabled="@_deleting"
+                        style="padding:0.5rem 1rem;background:#dc3545;color:white;border:none;border-radius:4px;cursor:pointer;">
+                    <i class="bi bi-trash-fill"></i> @(_deleting ? "Deleting..." : "Yes, Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<ExamSummary> _exams = new();
     private bool _loading = true;
+    private ExamSummary? _deleteTarget;
+    private bool _deleting;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => await LoadExams();
+
+    private async Task LoadExams()
     {
+        _loading = true;
         try
         {
             var result = await Http.GetFromJsonAsync<List<ExamSummary>>("/api/exams");
@@ -53,6 +98,26 @@ else
         }
         catch { }
         finally { _loading = false; }
+    }
+
+    private void ConfirmDelete(ExamSummary exam) => _deleteTarget = exam;
+    private void CancelDelete() => _deleteTarget = null;
+
+    private async Task ExecuteDelete()
+    {
+        if (_deleteTarget is null) return;
+        _deleting = true;
+        try
+        {
+            var response = await Http.DeleteAsync($"/api/exams/{_deleteTarget.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                _exams.Remove(_deleteTarget);
+                _deleteTarget = null;
+            }
+        }
+        catch { }
+        finally { _deleting = false; }
     }
 
     private record ExamSummary(Guid Id, string Title, Guid DocumentId, DateTime CreatedAt, int QuestionCount);

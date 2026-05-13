@@ -32,6 +32,10 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ291bnRlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Ahmed/exam-platform/src/ExamPlatform.Web/ExamPlatform.Web.Client/Pages/Documents.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRG9jdW1lbnRzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Ahmed/exam-platform/src/ExamPlatform.Web/ExamPlatform.Web.Client/Pages/ExamBuilder.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhhbUJ1aWxkZXIucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 

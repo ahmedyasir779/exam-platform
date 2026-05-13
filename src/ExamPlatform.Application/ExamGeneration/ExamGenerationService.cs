@@ -15,9 +15,17 @@ public class ExamGenerationService(
         var document = await documentRepository.GetByIdAsync(request.DocumentId, ct)
             ?? throw new InvalidOperationException($"Document {request.DocumentId} not found");
 
-        var allChunks = document.Chunks.ToList();
-        if (allChunks.Count == 0)
-            throw new InvalidOperationException("Document has no chunks. Please re-upload the PDF.");
+        // Filter chunks by page range
+        var filteredChunks = document.Chunks
+            .Where(c => c.Page >= request.FromPage && c.Page <= request.ToPage)
+            .ToList();
+
+        if (filteredChunks.Count == 0)
+            throw new InvalidOperationException(
+                $"No content found between pages {request.FromPage} and {request.ToPage}. " +
+                "Try a wider page range.");
+
+        Console.WriteLine($"Using {filteredChunks.Count} chunks from pages {request.FromPage}–{request.ToPage}");
 
         var exam = new Exam
         {
@@ -33,11 +41,11 @@ public class ExamGenerationService(
         {
             for (int i = 0; i < slot.Count; i++)
             {
-                // Add delay between calls to respect Groq free tier rate limits
                 if (position > 0)
                     await Task.Delay(2000, ct);
 
-                var contextChunks = allChunks
+                // Pick 5 random chunks from the filtered page range
+                var contextChunks = filteredChunks
                     .OrderBy(_ => random.Next())
                     .Take(5)
                     .ToList();
@@ -46,7 +54,7 @@ public class ExamGenerationService(
                     .Select(c => $"[Page {c.Page}] {c.Text}")
                     .ToList();
 
-                Console.WriteLine($"Generating question {position + 1} ({slot.Type})...");
+                Console.WriteLine($"Generating question {position + 1} ({slot.Type}) from pages {request.FromPage}–{request.ToPage}...");
 
                 var generated = await grokClient.GenerateQuestionAsync(
                     slot.Type, request.Template.Difficulty,

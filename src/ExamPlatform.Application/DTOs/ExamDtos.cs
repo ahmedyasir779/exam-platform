@@ -1,6 +1,13 @@
 namespace ExamPlatform.Application.DTOs;
 
-public record GenerateExamRequest(Guid DocumentId, string Title, ExamTemplateDto Template);
+public record GenerateExamRequest(
+    Guid DocumentId,
+    string Title,
+    ExamTemplateDto Template,
+    int FromPage = 1,
+    int ToPage = int.MaxValue
+);
+
 public record ExamTemplateDto(List<QuestionTypeCount> QuestionTypes, string Difficulty, string Language);
 public record QuestionTypeCount(string Type, int Count);
 

@@ -8,6 +8,7 @@ public interface IDocumentRepository
     Task<IReadOnlyList<Document>> GetAllAsync(CancellationToken ct = default);
     Task AddAsync(Document document, CancellationToken ct = default);
     Task UpdateAsync(Document document, CancellationToken ct = default);
+    Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task AddChunksAsync(IEnumerable<Chunk> chunks, CancellationToken ct = default);
     Task<IReadOnlyList<Chunk>> GetChunksByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default);
 }

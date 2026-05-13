@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ExamPlatform.Application.PdfProcessing;
 
 namespace ExamPlatform.Application.ExamGeneration;
 
@@ -13,19 +14,46 @@ public class GrokClient(HttpClient httpClient)
         string questionType, string difficulty, string language,
         IEnumerable<string> contextChunks, CancellationToken ct = default)
     {
-        var context = string.Join("\n\n---\n\n", contextChunks);
+        var chunkList = contextChunks.ToList();
+        var context = string.Join("\n\n---\n\n", chunkList);
+        var isArabic = ChunkingStrategy.IsArabic(context);
 
-        var systemPrompt =
-            "You are an expert exam question generator. Use ONLY the provided context. " +
-            "Return valid JSON only. No markdown, no code fences. " +
-            "RULES: correct_answer must be a string. For true/false use \"True\" or \"False\". " +
-            "source_page must be an integer. source_snippet must be a short single-line string with no line breaks or unescaped quotes.";
+        string systemPrompt, userPrompt;
 
-        var userPrompt =
-            $"Context:\n{context}\n\n" +
-            $"Generate ONE {questionType} question at {difficulty} difficulty in {language} language.\n" +
-            "Return ONLY this JSON:\n" +
-            "{\"question_text\":\"...\",\"options\":null,\"correct_answer\":\"...\",\"source_page\":1,\"source_snippet\":\"brief one-line snippet\"}";
+        if (isArabic)
+        {
+            var arabicType = TranslateQuestionTypeToArabic(questionType);
+            var arabicDifficulty = TranslateDifficultyToArabic(difficulty);
+
+            systemPrompt =
+                "??? ???? ?? ????? ????? ?????????? ?????????. " +
+                "?????? ??? ????????? ??????? ?? ???? ??????. " +
+                "?? ????? ??????? ??? ?????? ?? ????. " +
+                "??? ????? JSON ???? ???? ?? ??? ?? ?????? markdown. " +
+                "correct_answer ??? ?? ???? ???? ??????. ??????? ????/??? ?????? \"????\" ?? \"???\". " +
+                "source_page ??? ?? ???? ????? ??????. " +
+                "source_snippet ??? ?? ???? ???? ????? ??? ??? ????.";
+
+            userPrompt =
+                $"????:\n{context}\n\n" +
+                $"???? ?????? ?????? ?? ??? ({arabicType}) ?????? ????? ({arabicDifficulty}).\n" +
+                "??? ??? JSON ???:\n" +
+                "{\"question_text\":\"...\",\"options\":null,\"correct_answer\":\"...\",\"source_page\":1,\"source_snippet\":\"...\"}";
+        }
+        else
+        {
+            systemPrompt =
+                "You are an expert exam question generator. Use ONLY the provided context. " +
+                "Return valid JSON only. No markdown, no code fences. " +
+                "correct_answer must be a string. For true/false use \"True\" or \"False\". " +
+                "source_page must be an integer. source_snippet must be a short single-line string.";
+
+            userPrompt =
+                $"Context:\n{context}\n\n" +
+                $"Generate ONE {questionType} question at {difficulty} difficulty in {language} language.\n" +
+                "Return ONLY this JSON:\n" +
+                "{\"question_text\":\"...\",\"options\":null,\"correct_answer\":\"...\",\"source_page\":1,\"source_snippet\":\"...\"}";
+        }
 
         var raw = await CallGroqAsync(systemPrompt, userPrompt, ct);
         return ParseQuestion(raw);
@@ -35,19 +63,56 @@ public class GrokClient(HttpClient httpClient)
         string questionText, string studentAnswer,
         IEnumerable<string> referenceChunks, CancellationToken ct = default)
     {
-        var reference = string.Join("\n\n---\n\n", referenceChunks);
+        var chunkList = referenceChunks.ToList();
+        var reference = string.Join("\n\n---\n\n", chunkList);
+        var isArabic = ChunkingStrategy.IsArabic(reference) || ChunkingStrategy.IsArabic(questionText);
 
-        var systemPrompt =
-            "You are a strict academic grader. Score ONLY against the reference. " +
-            "Return valid JSON only. No markdown, no code fences.\n" +
-            "JSON: {\"score\":5,\"feedback\":\"...\",\"source_page\":1}";
+        string systemPrompt, userPrompt;
 
-        var userPrompt =
-            $"Question: {questionText}\n\nReference:\n{reference}\n\nStudent answer: {studentAnswer}\n\nScore 0-10.";
+        if (isArabic)
+        {
+            systemPrompt =
+                "??? ???? ??????? ????. ???? ????? ?????? ??? ????? ??? ?????? ???????? ???????. " +
+                "?? ???? ????? ??? ????? ??? ????? ?? ??????. " +
+                "??? ????? JSON ???: {\"score\":5,\"feedback\":\"...\",\"source_page\":1}";
+
+            userPrompt =
+                $"??????: {questionText}\n\n" +
+                $"?????? ????????:\n{reference}\n\n" +
+                $"????? ??????: {studentAnswer}\n\n" +
+                "???? ??????? ?? 0 ??? 10. ???? ?? ??? ?????? ??? ??? ??????.";
+        }
+        else
+        {
+            systemPrompt =
+                "You are a strict academic grader. Score ONLY against the reference. " +
+                "Return valid JSON only. No markdown, no code fences.\n" +
+                "JSON: {\"score\":5,\"feedback\":\"...\",\"source_page\":1}";
+
+            userPrompt =
+                $"Question: {questionText}\n\nReference:\n{reference}\n\nStudent answer: {studentAnswer}\n\nScore 0-10.";
+        }
 
         var raw = await CallGroqAsync(systemPrompt, userPrompt, ct);
         return ParseGrading(raw);
     }
+
+    private static string TranslateQuestionTypeToArabic(string type) => type switch
+    {
+        "mcq" => "?????? ?? ?????",
+        "true_false" => "?? ?? ???",
+        "short_answer" => "????? ?????",
+        "definition" => "?????",
+        _ => type
+    };
+
+    private static string TranslateDifficultyToArabic(string difficulty) => difficulty switch
+    {
+        "easy" => "???",
+        "medium" => "?????",
+        "hard" => "???",
+        _ => difficulty
+    };
 
     private async Task<string> CallGroqAsync(string system, string user, CancellationToken ct)
     {
@@ -95,7 +160,6 @@ public class GrokClient(HttpClient httpClient)
         }
         catch
         {
-            // If all parsing fails, return a safe default so we don't crash
             return new GeneratedQuestion("Could not parse question from AI response.", null, "N/A", 1, null);
         }
     }
@@ -106,7 +170,7 @@ public class GrokClient(HttpClient httpClient)
         {
             using var doc = JsonDocument.Parse(content);
             var root = doc.RootElement;
-            var score = root.TryGetProperty("score", out var s) ? (float)GetIntOrString(root, "score") : 0f;
+            var score = (float)GetIntOrString(root, "score");
             var feedback = root.TryGetProperty("feedback", out var f) ? f.GetString() ?? "" : "";
             var sourcePage = GetIntOrString(root, "source_page");
             return new GradingResult(score, feedback, sourcePage);

@@ -9,15 +9,77 @@
 
 @if (_documentId is null)
 {
-    <p>No document selected. <a href="/upload">Upload a PDF first</a>.</p>
+    <div style="max-width:600px;">
+        <h3>Select a document</h3>
+
+        @if (_documents.Count == 0)
+        {
+            <p>No documents yet. <a href="/upload">Upload a PDF first</a>.</p>
+        }
+        else
+        {
+            @foreach (var doc in _documents)
+            {
+                <div @onclick="() => SelectDocument(doc)"
+                     style="border:1px solid @(_selectedDoc?.Id == doc.Id ? "#0d6efd" : "#ddd");
+                            border-radius:8px;padding:1rem;margin-bottom:0.75rem;cursor:pointer;
+                            background:@(_selectedDoc?.Id == doc.Id ? "#f0f7ff" : "white");">
+                    <i class="bi bi-file-earmark-pdf" style="color:#dc3545;margin-right:0.5rem;"></i>
+                    <strong>@doc.OriginalName</strong>
+                    <span style="margin-left:1rem;font-size:0.85rem;color:#666;">
+                        @doc.PageCount page(s) &middot; @doc.CreatedAt.ToString("MMM d, yyyy")
+                    </span>
+                </div>
+            }
+
+            @if (_selectedDoc is not null)
+            {
+                <button @onclick="ConfirmDocument"
+                        style="padding:0.5rem 1.5rem;background:#0d6efd;color:white;border:none;border-radius:4px;cursor:pointer;margin-top:0.5rem;">
+                    Use &quot;@_selectedDoc.OriginalName&quot; <i class="bi bi-arrow-right"></i>
+                </button>
+            }
+        }
+    </div>
 }
 else
 {
-    <div style="max-width:600px;">
+    <div style="max-width:640px;">
+
+        <div style="background:#f8f9fa;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;">
+            <span>
+                <i class="bi bi-file-earmark-pdf" style="color:#dc3545;margin-right:0.4rem;"></i>
+                <strong>@_selectedDoc!.OriginalName</strong>
+                <span style="color:#666;margin-left:0.5rem;">(@_selectedDoc.PageCount pages)</span>
+            </span>
+            <button @onclick="ChangeDocument"
+                    style="background:none;border:1px solid #ccc;border-radius:4px;padding:0.25rem 0.75rem;cursor:pointer;font-size:0.85rem;">
+                <i class="bi bi-arrow-left-circle"></i> Change
+            </button>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+            <h3 style="margin-bottom:0.5rem;">Page range</h3>
+            <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+                <label>From page:
+                    <input type="number" @bind="_fromPage" min="1" max="@_selectedDoc.PageCount"
+                           style="width:70px;margin-left:0.5rem;padding:0.3rem;" />
+                </label>
+                <label>To page:
+                    <input type="number" @bind="_toPage" min="1" max="@_selectedDoc.PageCount"
+                           style="width:70px;margin-left:0.5rem;padding:0.3rem;" />
+                </label>
+                <span style="color:#666;font-size:0.85rem;">(max @_selectedDoc.PageCount)</span>
+            </div>
+            @if (_fromPage > _toPage)
+            {
+                <p style="color:red;font-size:0.85rem;margin:0.3rem 0 0;">From page must be less than or equal to To page.</p>
+            }
+        </div>
+
         <div style="margin-bottom:1rem;">
             <label><strong>Exam title</strong></label><br/>
-            <input @bind="_title" style="width:100%;padding:0.4rem;margin-top:0.3rem;"
-                   placeholder="e.g. Chapter 3 Quiz" />
+            <input @bind="_title" style="width:100%;padding:0.4rem;margin-top:0.3rem;" placeholder="e.g. Chapter 3 Quiz" />
         </div>
 
         <h3>Question counts</h3>
@@ -28,7 +90,7 @@ else
             <label>Definition: <input type="number" @bind="_defCount" min="0" max="20" style="width:60px;" /></label>
         </div>
 
-        <div style="margin-bottom:1rem;">
+        <div style="margin-bottom:1.5rem;">
             <label><strong>Difficulty</strong>
                 <select @bind="_difficulty" style="margin-left:0.5rem;">
                     <option value="easy">Easy</option>
@@ -38,60 +100,93 @@ else
             </label>
         </div>
 
-        <button @onclick="GenerateExam" disabled="@_generating"
-                style="padding:0.5rem 1.5rem;background:#0d6efd;color:white;border:none;border-radius:4px;cursor:pointer;">
-            @(_generating ? "Generating... (this may take a moment)" : "Generate Exam")
+        <button @onclick="GenerateExam" disabled="@(_generating || _fromPage > _toPage)"
+                style="padding:0.6rem 1.5rem;background:#0d6efd;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1rem;">
+            <i class="bi bi-stars"></i>
+            @(_generating ? "Generating... please wait" : "Generate Exam")
         </button>
     </div>
 
     @if (_error is not null)
     {
-        <p style="color:red;margin-top:1rem;">@_error</p>
+        <div style="color:red;background:#fff0f0;border:1px solid #ffcccc;border-radius:6px;padding:0.75rem;margin-top:1rem;max-width:640px;">
+            <i class="bi bi-exclamation-triangle-fill"></i> @_error
+        </div>
     }
 
     @if (_exam is not null)
     {
         <hr style="margin:2rem 0;" />
         <h2>@_exam.Title</h2>
-        <p style="color:#666;">@_exam.Questions.Count question(s) generated</p>
+        <p style="color:#666;">
+            <i class="bi bi-card-list"></i> @_exam.Questions.Count question(s)
+            &nbsp;&middot;&nbsp;
+            <i class="bi bi-files"></i> Pages @_fromPage &ndash; @_toPage
+        </p>
 
         @foreach (var q in _exam.Questions)
         {
-            <div style="border:1px solid #ddd;border-radius:6px;padding:1rem;margin-bottom:1rem;">
-                <p><strong>Q@(q.Position + 1) — @q.Type</strong></p>
-                <p>@q.QuestionText</p>
+            <div style="border:1px solid #ddd;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+
+                <div style="display:flex;gap:0.5rem;align-items:baseline;margin-bottom:0.5rem;">
+                    <span style="font-weight:bold;">Q@(q.Position + 1)</span>
+                    <span style="background:#e9ecef;border-radius:4px;padding:0.1rem 0.5rem;font-size:0.8rem;color:#555;">@q.Type</span>
+                </div>
+
+                <p style="margin:0 0 0.75rem;">@q.QuestionText</p>
 
                 @if (q.Options is not null)
                 {
-                    <ul>
+                    <ul style="margin:0 0 0.75rem;padding-left:1.5rem;">
                         @foreach (var opt in q.Options)
                         {
-                            <li style="@(opt == q.CorrectAnswer ? "color:green;font-weight:bold;" : "")">@opt</li>
+                            <li style="@(opt == q.CorrectAnswer ? "color:green;font-weight:bold;" : "color:#333;")">
+                                @if (opt == q.CorrectAnswer)
+                                {
+                                    <i class="bi bi-check-circle-fill" style="margin-right:0.3rem;"></i>
+                                }
+                                @opt
+                            </li>
                         }
                     </ul>
                 }
                 else
                 {
-                    <p style="color:green;"><strong>Answer:</strong> @q.CorrectAnswer</p>
+                    <p style="color:green;margin:0 0 0.75rem;">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <strong>Answer:</strong> @q.CorrectAnswer
+                    </p>
                 }
 
-                <p style="font-size:0.8rem;color:#888;">?? Source: Page @q.SourcePage</p>
+                <div style="background:#f8f9fa;border-left:3px solid #0d6efd;padding:0.5rem 0.75rem;border-radius:0 4px 4px 0;font-size:0.85rem;">
+                    <i class="bi bi-geo-alt-fill" style="color:#0d6efd;margin-right:0.3rem;"></i>
+                    <strong>Source:</strong> Page @q.SourcePage
+                    @if (!string.IsNullOrWhiteSpace(q.SourceSnippet))
+                    {
+                        <span style="color:#555;margin-left:0.5rem;">&mdash; &ldquo;@q.SourceSnippet&rdquo;</span>
+                    }
+                </div>
+
             </div>
         }
 
-        <div style="display:flex;gap:1rem;margin-top:1rem;">
+        <div style="display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap;">
             <a href="/api/exams/@_exam.Id/export/pdf" target="_blank"
-               style="padding:0.5rem 1rem;background:#198754;color:white;border-radius:4px;text-decoration:none;">
-                ? Download PDF
+               style="padding:0.5rem 1rem;background:#198754;color:white;border-radius:4px;text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;">
+                <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF
             </a>
             <a href="/api/exams/@_exam.Id/export/docx" target="_blank"
-               style="padding:0.5rem 1rem;background:#0dcaf0;color:white;border-radius:4px;text-decoration:none;">
-                ? Download DOCX
+               style="padding:0.5rem 1rem;background:#0d6efd;color:white;border-radius:4px;text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;">
+                <i class="bi bi-file-earmark-word-fill"></i> Download DOCX
             </a>
             <a href="/exams/@_exam.Id/take"
-               style="padding:0.5rem 1rem;background:#6f42c1;color:white;border-radius:4px;text-decoration:none;">
-                ?? Take Exam
+               style="padding:0.5rem 1rem;background:#6f42c1;color:white;border-radius:4px;text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;">
+                <i class="bi bi-pencil-fill"></i> Take Exam
             </a>
+            <button @onclick="GenerateAnother"
+                    style="padding:0.5rem 1rem;background:#fd7e14;color:white;border:none;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem;">
+                <i class="bi bi-arrow-repeat"></i> Generate Another
+            </button>
         </div>
     }
 }
@@ -99,22 +194,57 @@ else
 @code {
     [SupplyParameterFromQuery] public string? DocumentId { get; set; }
 
+    private List<DocumentDto> _documents = new();
+    private DocumentDto? _selectedDoc;
     private Guid? _documentId;
+
     private string _title = "New Exam";
     private int _mcqCount = 2, _tfCount = 1, _shortCount = 0, _defCount = 0;
     private string _difficulty = "medium";
+    private int _fromPage = 1;
+    private int _toPage = 999;
     private bool _generating;
     private string? _error;
     private ExamResponse? _exam;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        if (Guid.TryParse(DocumentId, out var id)) _documentId = id;
+        var docs = await Http.GetFromJsonAsync<List<DocumentDto>>("/api/documents");
+        _documents = docs?.Where(d => d.Status == "ready").OrderByDescending(d => d.CreatedAt).ToList() ?? [];
+
+        if (Guid.TryParse(DocumentId, out var id))
+        {
+            _selectedDoc = _documents.FirstOrDefault(d => d.Id == id);
+            if (_selectedDoc is not null) ConfirmDocument();
+        }
+    }
+
+    private void SelectDocument(DocumentDto doc) => _selectedDoc = doc;
+
+    private void ConfirmDocument()
+    {
+        if (_selectedDoc is null) return;
+        _documentId = _selectedDoc.Id;
+        _toPage = _selectedDoc.PageCount ?? 999;
+        _fromPage = 1;
+    }
+
+    private void ChangeDocument()
+    {
+        _documentId = null;
+        _exam = null;
+        _error = null;
+    }
+
+    private void GenerateAnother()
+    {
+        _exam = null;
+        _error = null;
     }
 
     private async Task GenerateExam()
     {
-        if (_documentId is null) return;
+        if (_documentId is null || _fromPage > _toPage) return;
         _generating = true;
         _error = null;
         _exam = null;
@@ -127,10 +257,18 @@ else
             if (_shortCount > 0) questionTypes.Add(new { type = "short_answer", count = _shortCount });
             if (_defCount > 0) questionTypes.Add(new { type = "definition", count = _defCount });
 
+            if (questionTypes.Count == 0)
+            {
+                _error = "Please set at least one question type count above 0.";
+                return;
+            }
+
             var request = new
             {
                 documentId = _documentId,
                 title = _title,
+                fromPage = _fromPage,
+                toPage = _toPage,
                 template = new
                 {
                     questionTypes,
@@ -140,10 +278,9 @@ else
             };
 
             var response = await Http.PostAsJsonAsync("/api/exams/generate", request);
-
             if (!response.IsSuccessStatusCode)
             {
-                _error = $"Generation failed: {response.StatusCode}";
+                _error = $"Generation failed: {await response.Content.ReadAsStringAsync()}";
                 return;
             }
 
@@ -159,6 +296,7 @@ else
         }
     }
 
+    private record DocumentDto(Guid Id, string OriginalName, string Status, int? PageCount, DateTime CreatedAt);
     private record ExamResponse(Guid Id, string Title, Guid DocumentId, DateTime CreatedAt, List<QuestionItem> Questions);
     private record QuestionItem(Guid Id, string Type, string QuestionText, List<string>? Options, string CorrectAnswer, int SourcePage, string? SourceSnippet, int Position);
 }

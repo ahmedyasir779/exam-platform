@@ -2,7 +2,6 @@ using ExamPlatform.Application.DTOs;
 using ExamPlatform.Application.PdfProcessing;
 using ExamPlatform.Domain.Entities;
 using ExamPlatform.Domain.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ExamPlatform.Api.Endpoints;
 
@@ -33,12 +32,10 @@ public static class DocumentEndpoints
 
             var docId = document.Id;
 
-            // Fire and forget with a NEW scope so DbContext is not disposed
             _ = Task.Run(async () =>
             {
                 await using var scope = serviceProvider.CreateAsyncScope();
                 var pdfService = scope.ServiceProvider.GetRequiredService<PdfProcessingService>();
-                var repo = scope.ServiceProvider.GetRequiredService<IDocumentRepository>();
 
                 try
                 {
@@ -72,6 +69,28 @@ public static class DocumentEndpoints
             var docs = await repo.GetAllAsync(ct);
             return Results.Ok(docs.Select(d =>
                 new DocumentListItemDto(d.Id, d.OriginalName, d.ProcessedStatus, d.CreatedAt)));
+        });
+
+        group.MapDelete("/{id:guid}", async (
+            Guid id,
+            IDocumentRepository repo,
+            IFileStorage fileStorage,
+            IVectorStore vectorStore,
+            CancellationToken ct) =>
+        {
+            var doc = await repo.GetByIdAsync(id, ct);
+            if (doc is null) return Results.NotFound();
+
+            // Delete physical file
+            try { await fileStorage.DeleteAsync(doc.FilePath, ct); } catch { }
+
+            // Delete vector index
+            try { await vectorStore.DeleteDocumentAsync(id.ToString(), ct); } catch { }
+
+            // Delete from DB (cascades to chunks)
+            await repo.DeleteAsync(id, ct);
+
+            return Results.Ok();
         });
     }
 }
