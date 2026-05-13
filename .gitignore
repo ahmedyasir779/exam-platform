@@ -1,15 +1,16 @@
+# Build outputs
+bin/
+obj/
 
 # Environment secrets
 .env
 *.env.local
+
+# Development settings with secrets - never commit these
+src/ExamPlatform.Api/appsettings.Development.json
 
 # FAISS indexes
 *.index
 
 # Local data
 /data/
-
-# Build outputs
-bin/
-obj/
-
