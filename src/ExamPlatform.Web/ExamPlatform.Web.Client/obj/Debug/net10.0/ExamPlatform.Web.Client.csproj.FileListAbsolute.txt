@@ -1073,10 +1073,10 @@ C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\obj\De
 C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\obj\Debug\net10.0\refint\ExamPlatform.Web.Client.dll
 C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\obj\Debug\net10.0\ExamPlatform.Web.Client.pdb
 C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\obj\Debug\net10.0\ref\ExamPlatform.Web.Client.dll
-C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\bin\Debug\net10.0\wwwroot\_framework\ExamPlatform.Web.Client.55dyyx2vbx.wasm
-C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\bin\Debug\net10.0\wwwroot\_framework\ExamPlatform.Web.Client.abc809qzwm.pdb
-C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\bin\Debug\net10.0\wwwroot\_framework\ExamPlatform.Web.Client.55dyyx2vbx.wasm.gz
-C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\bin\Debug\net10.0\wwwroot\_framework\ExamPlatform.Web.Client.abc809qzwm.pdb.gz
-C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\obj\Debug\net10.0\compressed\fl26pqn8yu-{0}-55dyyx2vbx-55dyyx2vbx.gz
-C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\obj\Debug\net10.0\compressed\rqweog96uu-{0}-abc809qzwm-abc809qzwm.gz
-C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\obj\Debug\net10.0\compressed\euwz0eav42-{0}-p6d6v4nsrc-p6d6v4nsrc.gz
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\bin\Debug\net10.0\wwwroot\_framework\ExamPlatform.Web.Client.f4tscnfei5.wasm
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\bin\Debug\net10.0\wwwroot\_framework\ExamPlatform.Web.Client.kmuithrvp7.pdb
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\bin\Debug\net10.0\wwwroot\_framework\ExamPlatform.Web.Client.f4tscnfei5.wasm.gz
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\bin\Debug\net10.0\wwwroot\_framework\ExamPlatform.Web.Client.kmuithrvp7.pdb.gz
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\obj\Debug\net10.0\compressed\fl26pqn8yu-{0}-f4tscnfei5-f4tscnfei5.gz
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\obj\Debug\net10.0\compressed\rqweog96uu-{0}-kmuithrvp7-kmuithrvp7.gz
+C:\Users\Ahmed\exam-platform\src\ExamPlatform.Web\ExamPlatform.Web.Client\obj\Debug\net10.0\compressed\euwz0eav42-{0}-wwchueb8ts-wwchueb8ts.gz
