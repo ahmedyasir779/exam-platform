@@ -1,6 +1,5 @@
 using System.Text.Json;
 using ExamPlatform.Application.DTOs;
-using ExamPlatform.Application.Embedding;
 using ExamPlatform.Domain.Entities;
 using ExamPlatform.Domain.Interfaces;
 
@@ -9,12 +8,17 @@ namespace ExamPlatform.Application.ExamGeneration;
 public class ExamGenerationService(
     IExamRepository examRepository,
     IDocumentRepository documentRepository,
-    EmbeddingService embeddingService,
-    IVectorStore vectorStore,
     GrokClient grokClient)
 {
     public async Task<ExamDto> GenerateAsync(GenerateExamRequest request, CancellationToken ct = default)
     {
+        var document = await documentRepository.GetByIdAsync(request.DocumentId, ct)
+            ?? throw new InvalidOperationException($"Document {request.DocumentId} not found");
+
+        var allChunks = document.Chunks.ToList();
+        if (allChunks.Count == 0)
+            throw new InvalidOperationException("Document has no chunks. Please re-upload the PDF.");
+
         var exam = new Exam
         {
             DocumentId = request.DocumentId,
@@ -23,27 +27,34 @@ public class ExamGenerationService(
 
         var questions = new List<Question>();
         int position = 0;
+        var random = new Random();
 
         foreach (var slot in request.Template.QuestionTypes)
         {
             for (int i = 0; i < slot.Count; i++)
             {
-                var queryVector = await embeddingService.EmbedQueryAsync(
-                    $"{slot.Type} question about the document content", ct);
+                // Add delay between calls to respect Groq free tier rate limits
+                if (position > 0)
+                    await Task.Delay(2000, ct);
 
-                var results = await vectorStore.SearchAsync(
-                    request.DocumentId.ToString(), queryVector, topK: 5, ct);
+                var contextChunks = allChunks
+                    .OrderBy(_ => random.Next())
+                    .Take(5)
+                    .ToList();
 
-                var chunkIds = results.Select(r => Guid.Parse(r.ChunkId)).ToList();
-                var chunks = await documentRepository.GetChunksByIdsAsync(chunkIds, ct);
-                var contextTexts = chunks.Select(c => $"[Page {c.Page}] {c.Text}").ToList();
+                var contextTexts = contextChunks
+                    .Select(c => $"[Page {c.Page}] {c.Text}")
+                    .ToList();
+
+                Console.WriteLine($"Generating question {position + 1} ({slot.Type})...");
 
                 var generated = await grokClient.GenerateQuestionAsync(
                     slot.Type, request.Template.Difficulty,
                     request.Template.Language, contextTexts, ct);
 
-                var sourceChunk = chunks.FirstOrDefault(c => c.Page == generated.SourcePage)
-                    ?? chunks.FirstOrDefault();
+                var sourceChunk = contextChunks
+                    .FirstOrDefault(c => c.Page == generated.SourcePage)
+                    ?? contextChunks.First();
 
                 questions.Add(new Question
                 {

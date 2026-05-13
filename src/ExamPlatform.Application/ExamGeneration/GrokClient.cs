@@ -10,84 +10,55 @@ public class GrokClient(HttpClient httpClient)
     private const string Model = "llama-3.3-70b-versatile";
 
     public async Task<GeneratedQuestion> GenerateQuestionAsync(
-        string questionType,
-        string difficulty,
-        string language,
-        IEnumerable<string> contextChunks,
-        CancellationToken ct = default)
+        string questionType, string difficulty, string language,
+        IEnumerable<string> contextChunks, CancellationToken ct = default)
     {
         var context = string.Join("\n\n---\n\n", contextChunks);
 
         var systemPrompt =
-            "You are an expert exam question generator. " +
-            "Use ONLY the provided context to generate questions. " +
-            "Never invent facts not present in the context. " +
-            "Return valid JSON only. No markdown, no explanation, no code fences.";
+            "You are an expert exam question generator. Use ONLY the provided context. " +
+            "Return valid JSON only. No markdown, no code fences. " +
+            "RULES: correct_answer must be a string. For true/false use \"True\" or \"False\". " +
+            "source_page must be an integer. source_snippet must be a short single-line string with no line breaks or unescaped quotes.";
 
         var userPrompt =
             $"Context:\n{context}\n\n" +
             $"Generate ONE {questionType} question at {difficulty} difficulty in {language} language.\n" +
-            $"Return this exact JSON shape (options should be null for non-MCQ):\n" +
-            "{\"question_text\":\"...\",\"options\":null,\"correct_answer\":\"...\",\"source_page\":1,\"source_snippet\":\"...\"}";
+            "Return ONLY this JSON:\n" +
+            "{\"question_text\":\"...\",\"options\":null,\"correct_answer\":\"...\",\"source_page\":1,\"source_snippet\":\"brief one-line snippet\"}";
 
-        var payload = new
-        {
-            model = Model,
-            temperature = 0,
-            messages = new[]
-            {
-                new { role = "system", content = systemPrompt },
-                new { role = "user", content = userPrompt }
-            }
-        };
-
-        var response = await httpClient.PostAsJsonAsync(BaseUrl, payload, ct);
-        response.EnsureSuccessStatusCode();
-
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
-        var content = json
-            .GetProperty("choices")[0]
-            .GetProperty("message")
-            .GetProperty("content")
-            .GetString() ?? "{}";
-
-        content = CleanJson(content);
-
-        return JsonSerializer.Deserialize<GeneratedQuestion>(content, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        }) ?? throw new InvalidOperationException("Groq returned invalid JSON for question generation");
+        var raw = await CallGroqAsync(systemPrompt, userPrompt, ct);
+        return ParseQuestion(raw);
     }
 
     public async Task<GradingResult> GradeAnswerAsync(
-        string questionText,
-        string studentAnswer,
-        IEnumerable<string> referenceChunks,
-        CancellationToken ct = default)
+        string questionText, string studentAnswer,
+        IEnumerable<string> referenceChunks, CancellationToken ct = default)
     {
         var reference = string.Join("\n\n---\n\n", referenceChunks);
 
         var systemPrompt =
-            "You are a strict academic grader. " +
-            "Score the student answer ONLY against the provided reference material. " +
-            "Do not award marks for content not in the reference. " +
-            "Return valid JSON only. No markdown, no explanation, no code fences.\n" +
-            "JSON shape: {\"score\":0,\"feedback\":\"...\",\"source_page\":1}";
+            "You are a strict academic grader. Score ONLY against the reference. " +
+            "Return valid JSON only. No markdown, no code fences.\n" +
+            "JSON: {\"score\":5,\"feedback\":\"...\",\"source_page\":1}";
 
         var userPrompt =
-            $"Question: {questionText}\n\n" +
-            $"Reference material:\n{reference}\n\n" +
-            $"Student answer: {studentAnswer}\n\n" +
-            $"Score from 0 to 10. Explain what was correct and what was missing.";
+            $"Question: {questionText}\n\nReference:\n{reference}\n\nStudent answer: {studentAnswer}\n\nScore 0-10.";
 
+        var raw = await CallGroqAsync(systemPrompt, userPrompt, ct);
+        return ParseGrading(raw);
+    }
+
+    private async Task<string> CallGroqAsync(string system, string user, CancellationToken ct)
+    {
         var payload = new
         {
             model = Model,
             temperature = 0,
             messages = new[]
             {
-                new { role = "system", content = systemPrompt },
-                new { role = "user", content = userPrompt }
+                new { role = "system", content = system },
+                new { role = "user", content = user }
             }
         };
 
@@ -101,12 +72,69 @@ public class GrokClient(HttpClient httpClient)
             .GetProperty("content")
             .GetString() ?? "{}";
 
-        content = CleanJson(content);
+        return CleanJson(content);
+    }
 
-        return JsonSerializer.Deserialize<GradingResult>(content, new JsonSerializerOptions
+    private static GeneratedQuestion ParseQuestion(string content)
+    {
+        try
         {
-            PropertyNameCaseInsensitive = true
-        }) ?? new GradingResult(0, "Could not parse grading response", 0);
+            using var doc = JsonDocument.Parse(content);
+            var root = doc.RootElement;
+
+            var questionText = root.TryGetProperty("question_text", out var qt) ? qt.GetString() ?? "" : "";
+            var correctAnswer = GetStringOrBool(root, "correct_answer");
+            var sourcePage = GetIntOrString(root, "source_page");
+            var sourceSnippet = root.TryGetProperty("source_snippet", out var ss) ? ss.GetString() : null;
+
+            List<string>? options = null;
+            if (root.TryGetProperty("options", out var opts) && opts.ValueKind == JsonValueKind.Array)
+                options = opts.EnumerateArray().Select(o => o.GetString() ?? "").ToList();
+
+            return new GeneratedQuestion(questionText, options, correctAnswer, sourcePage, sourceSnippet);
+        }
+        catch
+        {
+            // If all parsing fails, return a safe default so we don't crash
+            return new GeneratedQuestion("Could not parse question from AI response.", null, "N/A", 1, null);
+        }
+    }
+
+    private static GradingResult ParseGrading(string content)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(content);
+            var root = doc.RootElement;
+            var score = root.TryGetProperty("score", out var s) ? (float)GetIntOrString(root, "score") : 0f;
+            var feedback = root.TryGetProperty("feedback", out var f) ? f.GetString() ?? "" : "";
+            var sourcePage = GetIntOrString(root, "source_page");
+            return new GradingResult(score, feedback, sourcePage);
+        }
+        catch
+        {
+            return new GradingResult(0, "Could not parse grading response.", 1);
+        }
+    }
+
+    private static string GetStringOrBool(JsonElement root, string key)
+    {
+        if (!root.TryGetProperty(key, out var val)) return "";
+        return val.ValueKind switch
+        {
+            JsonValueKind.True => "True",
+            JsonValueKind.False => "False",
+            JsonValueKind.String => val.GetString() ?? "",
+            _ => val.ToString()
+        };
+    }
+
+    private static int GetIntOrString(JsonElement root, string key)
+    {
+        if (!root.TryGetProperty(key, out var val)) return 1;
+        if (val.ValueKind == JsonValueKind.Number && val.TryGetInt32(out var n)) return n;
+        if (val.ValueKind == JsonValueKind.String && int.TryParse(val.GetString(), out var ns)) return ns;
+        return 1;
     }
 
     private static string CleanJson(string content)

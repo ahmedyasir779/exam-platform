@@ -1,8 +1,8 @@
 using ExamPlatform.Application.DTOs;
-using ExamPlatform.Application.Embedding;
 using ExamPlatform.Application.PdfProcessing;
 using ExamPlatform.Domain.Entities;
 using ExamPlatform.Domain.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ExamPlatform.Api.Endpoints;
 
@@ -16,8 +16,7 @@ public static class DocumentEndpoints
             IFormFile file,
             IFileStorage fileStorage,
             IDocumentRepository documentRepository,
-            PdfProcessingService pdfService,
-            EmbeddingService embeddingService,
+            IServiceProvider serviceProvider,
             CancellationToken ct) =>
         {
             if (file is null || file.Length == 0)
@@ -32,19 +31,24 @@ public static class DocumentEndpoints
             var document = new Document { FilePath = filePath, OriginalName = file.FileName };
             await documentRepository.AddAsync(document, ct);
 
+            var docId = document.Id;
+
+            // Fire and forget with a NEW scope so DbContext is not disposed
             _ = Task.Run(async () =>
             {
+                await using var scope = serviceProvider.CreateAsyncScope();
+                var pdfService = scope.ServiceProvider.GetRequiredService<PdfProcessingService>();
+                var repo = scope.ServiceProvider.GetRequiredService<IDocumentRepository>();
+
                 try
                 {
-                    await pdfService.ProcessAsync(document.Id);
-                    var doc = await documentRepository.GetByIdAsync(document.Id);
-                    if (doc?.Chunks.Count > 0)
-                        await embeddingService.EmbedAndIndexAsync(
-                            document.Id.ToString(), doc.Chunks.ToList());
+                    Console.WriteLine($"[{docId}] Starting PDF processing...");
+                    await pdfService.ProcessAsync(docId);
+                    Console.WriteLine($"[{docId}] PDF processing complete.");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Background processing failed: {ex.Message}");
+                    Console.WriteLine($"[{docId}] Processing failed: {ex.Message}");
                 }
             });
 

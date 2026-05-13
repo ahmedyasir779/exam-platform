@@ -1,5 +1,4 @@
 using ExamPlatform.Application.DTOs;
-using ExamPlatform.Application.Embedding;
 using ExamPlatform.Application.ExamGeneration;
 using ExamPlatform.Domain.Entities;
 using ExamPlatform.Domain.Interfaces;
@@ -9,14 +8,16 @@ namespace ExamPlatform.Application.Grading;
 public class GradingService(
     IExamRepository examRepository,
     IDocumentRepository documentRepository,
-    EmbeddingService embeddingService,
-    IVectorStore vectorStore,
     GrokClient grokClient)
 {
     public async Task<GradingResultDto> GradeAsync(SubmitAnswersRequest request, CancellationToken ct = default)
     {
         var exam = await examRepository.GetByIdAsync(request.ExamId, ct)
             ?? throw new InvalidOperationException($"Exam {request.ExamId} not found");
+
+        var document = await documentRepository.GetByIdAsync(exam.DocumentId, ct);
+        var allChunks = document?.Chunks.ToList() ?? [];
+        var random = new Random();
 
         var submission = new Submission
         {
@@ -49,16 +50,15 @@ public class GradingService(
             }
             else
             {
-                var queryVector = await embeddingService.EmbedQueryAsync(question.QuestionText, ct);
-                var results = await vectorStore.SearchAsync(
-                    exam.DocumentId.ToString(), queryVector, topK: 3, ct);
-
-                var chunkIds = results.Select(r => Guid.Parse(r.ChunkId)).ToList();
-                var chunks = await documentRepository.GetChunksByIdsAsync(chunkIds, ct);
-                var contextTexts = chunks.Select(c => $"[Page {c.Page}] {c.Text}").ToList();
+                // Use random chunks as reference context for grading
+                var contextChunks = allChunks
+                    .OrderBy(_ => random.Next())
+                    .Take(3)
+                    .Select(c => $"[Page {c.Page}] {c.Text}")
+                    .ToList();
 
                 var grading = await grokClient.GradeAnswerAsync(
-                    question.QuestionText, input.AnswerText, contextTexts, ct);
+                    question.QuestionText, input.AnswerText, contextChunks, ct);
 
                 score = grading.Score;
                 feedback = grading.Feedback;
@@ -85,7 +85,6 @@ public class GradingService(
             : 0;
 
         await examRepository.AddSubmissionAsync(submission, ct);
-
         return new GradingResultDto(submission.Id, submission.TotalScore.Value, answerResults);
     }
 }

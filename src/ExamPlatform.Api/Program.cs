@@ -1,5 +1,4 @@
 using ExamPlatform.Api.Endpoints;
-using ExamPlatform.Application.Embedding;
 using ExamPlatform.Application.Export;
 using ExamPlatform.Application.ExamGeneration;
 using ExamPlatform.Application.Grading;
@@ -24,7 +23,7 @@ builder.Services.AddScoped<IExamRepository, ExamRepository>();
 var storagePath = builder.Configuration["Storage:BasePath"] ?? "C:/tmp/examplatform/files";
 builder.Services.AddSingleton<IFileStorage>(_ => new LocalFileStorage(storagePath));
 
-// Vector store
+// Vector store (keyword mode — no external API)
 var vectorPath = builder.Configuration["VectorStore:BasePath"] ?? "C:/tmp/examplatform/faiss";
 builder.Services.AddSingleton<IVectorStore>(_ => new LocalVectorStore(vectorPath));
 
@@ -32,16 +31,8 @@ builder.Services.AddSingleton<IVectorStore>(_ => new LocalVectorStore(vectorPath
 builder.Services.AddScoped<ChunkingStrategy>();
 builder.Services.AddScoped<PdfProcessingService>();
 
-// Both Embedding and Grok use the same Groq API key
+// Groq HTTP client
 var groqKey = builder.Configuration["Grok:ApiKey"] ?? "";
-
-builder.Services.AddHttpClient<EmbeddingService>((_, client) =>
-{
-    client.DefaultRequestHeaders.Add("Authorization", $"Bearer {groqKey}");
-    client.Timeout = TimeSpan.FromSeconds(60);
-});
-builder.Services.AddScoped<EmbeddingService>();
-
 builder.Services.AddHttpClient<GrokClient>((_, client) =>
 {
     client.DefaultRequestHeaders.Add("Authorization", $"Bearer {groqKey}");
